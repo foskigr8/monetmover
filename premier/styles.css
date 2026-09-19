@@ -288,6 +288,7 @@ input[type=checkbox] { accent-color: var(--accent-2); }
 .clip .trim-shade { position: absolute; top:0; bottom:0; pointer-events:none; }
 
 .playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: #ff3b30; z-index: 7; pointer-events: none; }
+.tl-insert-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--orange); z-index: 8; pointer-events: none; display: none; box-shadow: 0 0 4px var(--orange); }
 .playhead .ph-cap { position: absolute; top: 0; left: -6px; width: 14px; height: 14px; background: #ff3b30; clip-path: polygon(0 0, 100% 0, 50% 100%); }
 .tl-dropline { position: absolute; top: 0; bottom: 0; width: 1px; background: #ffd24d; z-index: 6; pointer-events: none; }
 .marquee { position: absolute; z-index: 8; border: 1px solid var(--accent-2); background: rgba(17,119,187,.18); pointer-events: none; }

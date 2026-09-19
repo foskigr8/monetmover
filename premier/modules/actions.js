@@ -40,10 +40,10 @@ export const actInsertPrepared = (p) =>
     return clip;
   });
 
-export const actMoveClip = (clipId, start, trackId, preferBehind = false) =>
+export const actMoveClip = (clipId, start, trackId, desiredIndex = null) =>
   snapshotCommand("moveClip", "Move clip", () => {
     moveClip(clipId, start, trackId);
-    repositionIfOverlapping(clipId, preferBehind); // overlap -> auto free/new track, never destroy
+    repositionIfOverlapping(clipId, desiredIndex); // overlap -> auto free/new track, never destroy
   });
 
 export const actTrimClip = (clipId, parts) =>

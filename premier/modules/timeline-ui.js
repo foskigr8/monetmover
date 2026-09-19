@@ -417,11 +417,23 @@ export class TimelineUI {
       // target track (same kind only)
       const tt = this._trackFromClientY(e.clientY);
       if (tt && tt.kind === d.track.kind) d.targetTrackId = tt.id;
-      // Which half of the row the pointer is in decides "in front of" vs "behind" this
-      // track if a new track ends up needing to be created for an intentional overlap.
-      const rect = this.canvas.getBoundingClientRect();
-      const rowY = (e.clientY - rect.top - RULER_H) % ROW_H;
-      d.preferBehind = rowY > ROW_H / 2;
+      // Exact insertion boundary across the WHOLE stack (not just relative to whichever
+      // single row is nearest), so dropping precisely between two existing layers is
+      // direct instead of a coarse "front of the nearest one" guess. A fractional row
+      // position rounds to whichever boundary (above/below that row) it's closer to.
+      // Only show/use this when the hovered track is actually occupied at this time —
+      // an ordinary non-conflicting drag doesn't need it.
+      const targetTrack = state.tracks.find((x) => x.id === d.targetTrackId);
+      const occupied = targetTrack && targetTrack.clips.some((o) => o.id !== d.clip.id && o.start < ns + d.origDur && o.start + o.duration > ns);
+      if (occupied) {
+        const rect = this.canvas.getBoundingClientRect();
+        const rawIdx = (e.clientY - rect.top - RULER_H) / ROW_H;
+        d.desiredTrackIdx = Math.max(0, Math.min(state.tracks.length, Math.round(rawIdx)));
+        this._showInsertLine(d.desiredTrackIdx);
+      } else {
+        d.desiredTrackIdx = null;
+        this._hideInsertLine();
+      }
       d.el.style.left = (ns * state.pps) + "px";
       if (tt && tt.kind === d.track.kind && tt.id !== d.track.id) {
         const targetRow = this.canvas.querySelector(`.tl-row[data-track-id="${cssEscape(tt.id)}"]`);
@@ -464,7 +476,8 @@ export class TimelineUI {
     const d = this._drag;
     if (!d) return;
     if (d.mode === "move") {
-      actMoveClip(d.clip.id, this._dStart ?? d.clip.start, d.targetTrackId, !!d.preferBehind);
+      actMoveClip(d.clip.id, this._dStart ?? d.clip.start, d.targetTrackId, d.desiredTrackIdx);
+      this._hideInsertLine();
     } else if (d.mode === "left") {
       actTrimClip(d.clip.id, { start: this._dStart, offset: this._dOffset, duration: this._dDur });
     } else if (d.mode === "right") {
@@ -472,6 +485,22 @@ export class TimelineUI {
     }
     document.body.style.cursor = "";
     this._drag = null;
+  }
+
+  // Draw (or move) a thin horizontal line across the full timeline width at the exact
+  // track-boundary the drag would insert a new layer at, so where a clip will land in
+  // the stack is visible BEFORE releasing, not just decided invisibly on drop.
+  _showInsertLine(idx) {
+    if (!this._insertLine) {
+      this._insertLine = document.createElement("div");
+      this._insertLine.className = "tl-insert-line";
+      this.canvas.appendChild(this._insertLine);
+    }
+    this._insertLine.style.display = "block";
+    this._insertLine.style.top = (RULER_H + idx * ROW_H - 1) + "px";
+  }
+  _hideInsertLine() {
+    if (this._insertLine) this._insertLine.style.display = "none";
   }
 
   _snapStart(candidateStart, duration, excludeId) {

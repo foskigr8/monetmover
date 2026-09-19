@@ -418,13 +418,14 @@ export function trimClip(clipId, { start, offset, duration }) {
 //  correct kind. A plain move to empty space just moves in place.
 //  Returns { track, newStart } and does NOT mutate state (caller does the move).
 // =============================================================
-// preferBehind: when a new track has to be created because every existing same-kind
-// track is occupied at this time range, this says which side of the track the user was
-// actually dropping onto to create it on — true means "stack this behind/under what's
-// already there" (further from the front of the visual stack), false/omitted means "in
-// front of it". Without this, a new track always landed at the very front, so there was
-// no way to intentionally drop something behind an existing clip.
-export function resolvePlacement(clipId, trackId, start, dur, preferBehind = false) {
+// desiredIndex: an exact position in state.tracks (0 = very front) to create the new
+// track at, when one has to be created because every existing same-kind track is
+// occupied at this time range. Computed by the UI from the pointer's precise vertical
+// position across the WHOLE stack during a drag, so dropping between two specific
+// existing layers works directly, not just "front of" or "behind" whatever single
+// track happens to be nearest. Falls back to the old front-of/behind-anchor behavior
+// if no exact index is given.
+export function resolvePlacement(clipId, trackId, start, dur, desiredIndex = null) {
   // Determine the clip's kind from ITS media (clipId is a clip id, not a media id).
   let wantKind = "video";
   const clip = clipById(clipId);
@@ -437,22 +438,18 @@ export function resolvePlacement(clipId, trackId, start, dur, preferBehind = fal
   if (t && t.kind === wantKind && freeAt(t)) return { track: t, newStart: start };
   for (const other of cand) if (other.id !== clipId && freeAt(other)) return { track: other, newStart: start };
 
-  // no free same-kind track -> create one, anchored to the track the user actually
-  // dropped onto (trackId) and which side of it they indicated (preferBehind), rather
-  // than always jumping to the very front or very back of the whole stack.
+  // no free same-kind track -> create one, at the exact stack position requested.
   const name = wantKind === "video"
     ? `V${state.tracks.filter((x) => x.kind === "video").length + 1}`
     : `A${state.tracks.filter((x) => x.kind === "audio").length + 1}`;
   const nt = { id: uid("t"), kind: wantKind, name, muted: false, hidden: false, clips: [] };
 
-  const anchorIdx = t ? state.tracks.indexOf(t) : -1;
   let idx;
-  if (anchorIdx === -1) {
-    // no track to anchor to (shouldn't normally happen) -> keep old default behavior
-    idx = wantKind === "video" ? 0 : state.tracks.length;
+  if (Number.isFinite(desiredIndex)) {
+    idx = Math.max(0, Math.min(state.tracks.length, Math.round(desiredIndex)));
   } else {
-    // state.tracks is front-first: a lower index is visually/stack-order in front.
-    idx = preferBehind ? anchorIdx + 1 : anchorIdx;
+    const anchorIdx = t ? state.tracks.indexOf(t) : -1;
+    idx = anchorIdx === -1 ? (wantKind === "video" ? 0 : state.tracks.length) : anchorIdx;
   }
   state.tracks.splice(idx, 0, nt);
   return { track: nt, newStart: start, created: true };
@@ -460,13 +457,13 @@ export function resolvePlacement(clipId, trackId, start, dur, preferBehind = fal
 
 // After adding or moving a clip, if it now overlaps other clips on its track,
 // relocate it to a free same-kind track (creating one if necessary). Never destroys.
-export function repositionIfOverlapping(clipId, preferBehind = false) {
+export function repositionIfOverlapping(clipId, desiredIndex = null) {
   const f = clipById(clipId);
   if (!f) return;
   const c = f.clip;
   const overlaps = f.track.clips.some((o) => o.id !== clipId && o.start < c.start + c.duration && o.start + o.duration > c.start);
   if (!overlaps) return;
-  const place = resolvePlacement(clipId, f.track.id, c.start, c.duration, preferBehind);
+  const place = resolvePlacement(clipId, f.track.id, c.start, c.duration, desiredIndex);
   moveClip(clipId, place.newStart, place.track.id);
 }
 
