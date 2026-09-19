@@ -1,0 +1,77 @@
+0 verbose cli /system/conda/node/nvm/versions/node/v22.19.0/bin/node /teamspace/studios/this_studio/.nvm/versions/node/v22.19.0/bin/npm
+1 info using npm@10.9.3
+2 info using node@v22.19.0
+3 silly config load:file:/system/conda/node/nvm/versions/node/v22.19.0/lib/node_modules/npm/npmrc
+4 silly config load:file:/teamspace/studios/this_studio/moneymoves/.pwtest/.npmrc
+5 silly config load:file:/teamspace/studios/this_studio/.npmrc
+6 silly config load:file:/teamspace/studios/this_studio/moneymoves/.pwtest/etc/npmrc
+7 verbose title npm i playwright@1.49.1
+8 verbose argv "i" "--prefix" "/teamspace/studios/this_studio/moneymoves/.pwtest" "playwright@1.49.1"
+9 verbose logfile logs-max:10 dir:/teamspace/studios/this_studio/moneymoves/.pwtest/.npm-cache/_logs/2026-09-03T20_28_34_696Z-
+10 verbose logfile /teamspace/studios/this_studio/moneymoves/.pwtest/.npm-cache/_logs/2026-09-03T20_28_34_696Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+13 silly idealTree buildDeps
+14 silly fetch manifest playwright@1.49.1
+15 silly packumentCache full:https://registry.npmjs.org/playwright cache-miss
+16 http fetch GET 200 https://registry.npmjs.org/npm 342ms
+17 http fetch GET 200 https://registry.npmjs.org/playwright 493ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/playwright set size:undefined disposed:false
+19 silly placeDep ROOT playwright@1.49.1 OK for:  want: 1.49.1
+20 silly fetch manifest playwright-core@1.49.1
+21 silly packumentCache full:https://registry.npmjs.org/playwright-core cache-miss
+22 silly fetch manifest fsevents@2.3.2
+23 silly packumentCache full:https://registry.npmjs.org/fsevents cache-miss
+24 http fetch GET 200 https://registry.npmjs.org/fsevents 46ms (cache miss)
+25 silly packumentCache full:https://registry.npmjs.org/fsevents set size:undefined disposed:false
+26 http fetch GET 200 https://registry.npmjs.org/playwright-core 615ms (cache miss)
+27 silly packumentCache full:https://registry.npmjs.org/playwright-core set size:undefined disposed:false
+28 silly placeDep ROOT fsevents@2.3.2 OK for: playwright@1.49.1 want: 2.3.2
+29 silly placeDep ROOT playwright-core@1.49.1 OK for: playwright@1.49.1 want: 1.49.1
+30 silly reify moves {}
+31 silly audit bulk request {
+31 silly audit   playwright: [ '1.49.1' ],
+31 silly audit   fsevents: [ '2.3.2' ],
+31 silly audit   'playwright-core': [ '1.49.1' ]
+31 silly audit }
+32 verbose reify failed optional dependency /teamspace/studios/this_studio/moneymoves/.pwtest/node_modules/fsevents
+33 silly reify mark deleted [
+33 silly reify   '/teamspace/studios/this_studio/moneymoves/.pwtest/node_modules/fsevents'
+33 silly reify ]
+34 http cache playwright-core@https://registry.npmjs.org/playwright-core/-/playwright-core-1.49.1.tgz 0ms (cache hit)
+35 silly tarball no local data for playwright-core@https://registry.npmjs.org/playwright-core/-/playwright-core-1.49.1.tgz. Extracting by manifest.
+36 http cache playwright@https://registry.npmjs.org/playwright/-/playwright-1.49.1.tgz 0ms (cache hit)
+37 silly tarball no local data for playwright@https://registry.npmjs.org/playwright/-/playwright-1.49.1.tgz. Extracting by manifest.
+38 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 108ms
+39 silly audit report {
+39 silly audit report   playwright: [
+39 silly audit report     {
+39 silly audit report       id: 1109208,
+39 silly audit report       url: 'https://github.com/advisories/GHSA-7mvr-c777-76hp',
+39 silly audit report       title: 'Playwright downloads and installs browsers without verifying the authenticity of the SSL certificate',
+39 silly audit report       severity: 'high',
+39 silly audit report       vulnerable_versions: '<1.55.1',
+39 silly audit report       cwe: [Array],
+39 silly audit report       cvss: [Object]
+39 silly audit report     }
+39 silly audit report   ]
+39 silly audit report }
+40 silly packumentCache corgi:https://registry.npmjs.org/playwright cache-miss
+41 http fetch GET 200 https://registry.npmjs.org/playwright/-/playwright-1.49.1.tgz 273ms (cache miss)
+42 http fetch GET 200 https://registry.npmjs.org/playwright-core/-/playwright-core-1.49.1.tgz 531ms (cache miss)
+43 http fetch GET 200 https://registry.npmjs.org/playwright 486ms (cache miss)
+44 silly packumentCache corgi:https://registry.npmjs.org/playwright set size:undefined disposed:false
+45 silly ADD node_modules/playwright-core
+46 silly ADD
+47 silly ADD node_modules/playwright
+48 verbose cwd /teamspace/studios/this_studio/moneymoves/.pwtest
+49 verbose os Linux 6.8.0-110-generic
+50 verbose node v22.19.0
+51 verbose npm  v10.9.3
+52 notice
+52 notice New major version of npm available! 10.9.3 -> 12.0.2
+52 notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+52 notice To update run: npm install -g npm@12.0.2
+52 notice  { force: true, [Symbol(proc-log.meta)]: true }
+53 verbose exit 0
+54 info ok

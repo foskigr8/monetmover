@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MonetMover — Video Editor</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">▞</span>
+      <span class="brand-name">Monet<span>Mover</span></span>
+    </div>
+
+    <div class="seq">
+      <label class="seq-label">Sequence</label>
+      <input id="seq-name" class="seq-name" value="Sequence 01" spellcheck="false" />
+    </div>
+
+    <!-- Composition settings (the project's own frame, independent of imported media) -->
+    <div class="comp-wrap">
+      <button id="btn-comp" class="btn" title="Composition / output settings">Comp ▾</button>
+      <div class="comp-pop" id="comp-pop">
+        <div class="comp-title">Composition</div>
+        <div class="comp-row">
+          <label>Preset</label>
+          <select id="comp-preset">
+            <option value="1280x720">16:9 · 1280×720</option>
+            <option value="1920x1080">16:9 · 1920×1080</option>
+            <option value="1080x1920">9:16 · 1080×1920 (vertical)</option>
+            <option value="1080x1080">1:1 · 1080×1080 (square)</option>
+            <option value="640x480">4:3 · 640×480</option>
+            <option value="custom">Custom...</option>
+          </select>
+        </div>
+        <div class="comp-row">
+          <label>Size</label>
+          <input id="comp-w" type="number" min="16" max="4096" class="comp-num" />
+          <span>×</span>
+          <input id="comp-h" type="number" min="16" max="4096" class="comp-num" />
+        </div>
+        <div class="comp-row">
+          <label>Frame rate</label>
+          <select id="comp-fps">
+            <option>24</option><option>25</option><option selected>30</option><option>50</option><option>60</option>
+          </select>
+        </div>
+        <div class="comp-row">
+          <label>Fit</label>
+          <select id="comp-fit">
+            <option value="fit" selected>Fit (letterbox)</option>
+            <option value="fill">Fill (crop)</option>
+            <option value="original">Original size</option>
+          </select>
+        </div>
+        <div class="comp-note">Changes the <b>output frame</b> only — imported footage keeps its own size.</div>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button id="btn-new" class="btn" title="New empty sequence (clears timeline)">New</button>
+      <button id="btn-open" class="btn" title="Open a saved project (.mmproj)">Open</button>
+      <button id="btn-save" class="btn" title="Save the project structure to a .mmproj file">Save</button>
+      <div class="file-drop" id="file-drop" title="Import media into the bin">
+        <button id="btn-import" class="btn btn-primary">+ Import Media</button>
+        <input id="file-input" type="file" accept="video/*,audio/*,image/*" multiple hidden />
+        <input id="proj-input" type="file" accept=".mmproj,application/json,.json" hidden />
+        <span class="file-drop-hint">or drop files anywhere</span>
+      </div>
+      <button id="btn-export" class="btn btn-accent" title="Render the timeline to a video file">⭳ Export</button>
+    </div>
+  </header>
+
+  <!-- ============ MIDDLE ============ -->
+  <div class="middle">
+
+    <!-- LEFT: PROJECT / MEDIA BIN -->
+    <section class="panel bin" id="bin-panel">
+      <div class="panel-head">
+        <span class="panel-title">Project</span>
+        <span class="panel-count" id="bin-count">0 items</span>
+      </div>
+      <div class="bin-tools">
+        <button id="bin-append" class="chip" title="Append to selected track (end)">Append →</button>
+        <button id="bin-insert" class="chip" title="Insert at playhead">Insert @ playhead</button>
+      </div>
+      <div class="bin-grid" id="bin-grid"></div>
+      <div class="split split-v right" data-resize="bin" title="Drag to resize"></div>
+    </section>
+
+    <!-- CENTER: MONITORS -->
+    <section class="monitors">
+      <div class="monitor program" id="program-monitor">
+        <div class="monitor-head">
+          <span class="monitor-title">Program</span>
+          <span class="timecode" id="prog-tc">00:00:00.000</span>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="program-canvas" width="1280" height="720"></canvas>
+        </div>
+        <div class="transport">
+          <button id="tp-to-start" class="tbtn" title="Jump to start">⏮</button>
+          <button id="tp-prev" class="tbtn" title="Previous edit">◀</button>
+          <button id="tp-play" class="tbtn play" title="Play / Pause (Space)">▶</button>
+          <button id="tp-next" class="tbtn" title="Next edit">▶|</button>
+          <button id="tp-to-end" class="tbtn" title="Jump to end">⏭</button>
+          <label class="loop"><input type="checkbox" id="tp-loop" /> Loop</label>
+          <button id="tp-split" class="tbtn" title="Split at playhead (S)">✂</button>
+        </div>
+      </div>
+
+      <div class="monitor source" id="source-monitor">
+        <div class="split-mon" data-resize="monitor" title="Drag to resize Program / Source"></div>
+        <div class="monitor-head">
+          <span class="monitor-title">Source</span>
+          <span class="timecode" id="src-tc">00:00:00.000</span>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="source-canvas" width="1280" height="720"></canvas>
+        </div>
+        <div class="src-transport">
+          <div class="src-row">
+            <button id="src-play" class="tbtn play" title="Preview (Space when source focused)">▶</button>
+            <input id="src-time" class="scrub" type="range" min="0" max="1" step="0.001" value="0" />
+          </div>
+          <div class="src-seg" id="src-seg" title="Drag the white handles to choose the segment; click to scrub">
+            <div class="seg-dim" id="seg-dim-l"></div>
+            <div class="seg-dim" id="seg-dim-r"></div>
+            <div class="seg-region" id="seg-region"></div>
+            <div class="seg-handle in" id="seg-in"></div>
+            <div class="seg-handle out" id="seg-out"></div>
+            <div class="seg-ph" id="seg-ph"></div>
+            <div class="seg-label" id="seg-label"></div>
+          </div>
+          <div class="src-loop-options">
+            <select id="src-loop-mode" title="Playback mode for source preview">
+              <option value="once">Play once</option>
+              <option value="loop">Loop selected range</option>
+              <option value="play-range">Play range once</option>
+            </select>
+          </div>
+          <div class="io-row">
+            <button id="src-set-in" class="chip" title="Set in point at playhead">⟨ In</button>
+            <button id="src-set-out" class="chip" title="Set out point at playhead">Out ⟩</button>
+            <span class="io-meta" id="src-io">in 0.0s / out —</span>
+            <span class="io-actions">
+              <button id="src-append" class="chip" title="Append selected segment to the end of its track">Append →</button>
+              <button id="src-insert" class="chip primary" title="Insert selected segment at the playhead">Insert @ playhead</button>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: INSPECTOR -->
+    <aside class="panel inspector" id="inspector">
+      <div class="panel-head">
+        <span class="panel-title">Inspector</span>
+      </div>
+      <div class="insp-body" id="insp-body">
+        <div class="empty-note">Select a clip on the timeline to edit its properties.</div>
+      </div>
+      <div class="split split-v left" data-resize="inspector" title="Drag to resize"></div>
+    </aside>
+  </div>
+
+  <!-- ============ TIMELINE ============ -->
+  <section class="panel timeline" id="timeline-panel">
+    <div class="split split-h" data-resize="timeline" title="Drag to resize"></div>
+    <div class="tl-toolbar">
+      <div class="tool-group">
+        <button id="tool-select" class="tool active" title="Select / Move / Trim (V)">➤ Select</button>
+        <button id="tool-razor" class="tool" title="Razor — click a clip to cut at playhead (C)">✂ Razor</button>
+      </div>
+      <label class="snap" title="Magnetic snapping"><input type="checkbox" id="snap-toggle" checked /> Snap</label>
+      <div class="tool-group">
+        <button id="zoom-out" class="tool" title="Zoom out">−</button>
+        <span class="zoom-val" id="zoom-val">60 px/s</span>
+        <button id="zoom-in" class="tool" title="Zoom in">+</button>
+        <button id="zoom-fit" class="tool chip" title="Fit sequence to width">Fit</button>
+      </div>
+      <div class="tool-group">
+        <button id="add-vtrack" class="chip" title="Add a video track">+ Video Track</button>
+        <button id="add-audtrack" class="chip" title="Add an audio track">+ Audio Track</button>
+      </div>
+      <div class="tl-spacer"></div>
+      <span class="hint">Space play · <b>Ctrl/⌘+C</b> copy · <b>Ctrl/⌘+X</b> cut · <b>Ctrl/⌘+V</b> paste @ playhead · <b>Ctrl/⌘+K</b> / S split · ⌫ delete · drag edges to trim</span>
+    </div>
+
+    <div class="tl-scroll" id="tl-scroll">
+      <div class="tl-grid" id="tl-grid">
+        <div class="tl-headers" id="tl-headers"></div>
+        <div class="tl-canvas" id="tl-canvas"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- drop veil for importing files anywhere -->
+<div id="drop-veil" class="drop-veil"><div class="drop-veil-inner">Drop media to import</div></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "moneymover-editor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MonetMover — a browser-based non-linear video editor (Adobe Premiere-style) with no backend. Pure HTML/CSS/JS + Web APIs.",
+  "scripts": {
+    "dev": "python3 -m http.server 3090 --bind 127.0.0.1",
+    "serve": "python3 -m http.server 3090 --bind 127.0.0.1",
+    "test": "node test/state.test.js",
+    "test:state": "node test/state.test.js",
+    "test:smoke": "node test/smoke.js",
+    "test:regress": "node test/regress.js",
+    "test:features": "node test/features.js",
+    "test:foundation": "node test/foundation.js",
+    "test:all": "node test/state.test.js && node test/smoke.js && node test/regress.js && node test/features.js && node test/foundation.js",
+    "test:install": "npm i -D playwright && npx playwright install chromium"
+  },
+  "devDependencies": {}
+}
