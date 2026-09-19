@@ -1,5 +1,6 @@
 import { state, getMedia, addMedia, emitter } from "./state.js";
 import { fmtSec } from "./util.js";
+import { clipPeaks } from "./waveform.js";
 
 export class BinUI {
   constructor() {
@@ -48,10 +49,20 @@ export class BinUI {
       const thumb = document.createElement("div");
       thumb.className = "bin-thumb";
       if (m.type === "video") {
-        const v = document.createElement("video");
-        v.muted = true; v.playsInline = true; v.preload = "metadata";
-        v.src = m.url + "#t=0.1";
-        thumb.appendChild(v);
+        // media.thumb is a real decoded frame (data URL) captured at import time in
+        // state.js's videoThumb(). A live <video> with a "#t=" fragment on a blob: URL
+        // does not reliably show a frame (media fragments don't apply to blob URLs), so
+        // prefer the already-correct cached frame and only fall back if it's missing.
+        if (m.thumb) {
+          const img = document.createElement("img");
+          img.src = m.thumb; img.alt = m.name;
+          thumb.appendChild(img);
+        } else {
+          const v = document.createElement("video");
+          v.muted = true; v.playsInline = true; v.preload = "metadata";
+          v.src = m.url + "#t=0.1";
+          thumb.appendChild(v);
+        }
         const ov = document.createElement("div"); ov.className = "play-ov"; ov.textContent = "▶";
         thumb.appendChild(ov);
         const badge = document.createElement("div"); badge.className = "badge";
@@ -65,8 +76,22 @@ export class BinUI {
         badge.textContent = m.type === "svg" ? "SVG" : "IMG";
         thumb.appendChild(badge);
       } else {
-        const ov = document.createElement("div"); ov.className = "audio-ov"; ov.textContent = "♪";
-        thumb.appendChild(ov);
+        // Real waveform preview (same decoded peaks the timeline uses), falling back to
+        // the note icon only while peaks are still decoding or if the file has no audio.
+        const peaks = clipPeaks(m.id, 0, m.duration || 0, m.duration || 0);
+        if (peaks && peaks.length) {
+          const bars = Math.min(80, peaks.length);
+          let rects = "";
+          for (let i = 0; i < bars; i++) {
+            const v = peaks[Math.floor((i / bars) * peaks.length)] || 0;
+            const bh = 6 + v * 70;
+            rects += `<rect x="${(i / bars) * 100}" y="${40 - bh / 2}" width="${100 / bars}" height="${bh}"/>`;
+          }
+          thumb.innerHTML = `<svg viewBox="0 0 100 40" preserveAspectRatio="none" style="width:100%;height:100%;fill:var(--green)">${rects}</svg>`;
+        } else {
+          const ov = document.createElement("div"); ov.className = "audio-ov"; ov.textContent = "♪";
+          thumb.appendChild(ov);
+        }
       }
       const durBadge = document.createElement("div");
       durBadge.className = "badge";

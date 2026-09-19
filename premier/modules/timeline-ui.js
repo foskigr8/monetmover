@@ -417,6 +417,11 @@ export class TimelineUI {
       // target track (same kind only)
       const tt = this._trackFromClientY(e.clientY);
       if (tt && tt.kind === d.track.kind) d.targetTrackId = tt.id;
+      // Which half of the row the pointer is in decides "in front of" vs "behind" this
+      // track if a new track ends up needing to be created for an intentional overlap.
+      const rect = this.canvas.getBoundingClientRect();
+      const rowY = (e.clientY - rect.top - RULER_H) % ROW_H;
+      d.preferBehind = rowY > ROW_H / 2;
       d.el.style.left = (ns * state.pps) + "px";
       if (tt && tt.kind === d.track.kind && tt.id !== d.track.id) {
         const targetRow = this.canvas.querySelector(`.tl-row[data-track-id="${cssEscape(tt.id)}"]`);
@@ -459,7 +464,7 @@ export class TimelineUI {
     const d = this._drag;
     if (!d) return;
     if (d.mode === "move") {
-      actMoveClip(d.clip.id, this._dStart ?? d.clip.start, d.targetTrackId);
+      actMoveClip(d.clip.id, this._dStart ?? d.clip.start, d.targetTrackId, !!d.preferBehind);
     } else if (d.mode === "left") {
       actTrimClip(d.clip.id, { start: this._dStart, offset: this._dOffset, duration: this._dDur });
     } else if (d.mode === "right") {

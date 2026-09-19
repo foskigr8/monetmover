@@ -29,6 +29,7 @@ let lastProgTC = "", lastSrcTC = "", lastPlayingIcon = "";
 const player = new Player(programCanvas, sourceCanvas, onTick);
 const tl = new TimelineUI();
 const bin = new BinUI();
+emitter.on("waveform", () => bin.render());
 const insp = new InspectorUI();
 
 bin.onSelect = (id) => player.loadSource(id);
@@ -477,17 +478,6 @@ function bindCanvasManipulation() {
           }
           
           // Recalculate position
-          if (handle.includes("w")) left = right - nw;
-          if (handle.includes("n")) top = bottom - nh;
-        }
-        
-        // Snap to original size when close (within 5%)
-        const currentArea = nw * nh;
-        const origArea = origW * origH;
-        const areaRatio = currentArea / origArea;
-        if (areaRatio > 0.95 && areaRatio < 1.05 && !ev.shiftKey) {
-          nw = origW;
-          nh = origH;
           if (handle.includes("w")) left = right - nw;
           if (handle.includes("n")) top = bottom - nh;
         }

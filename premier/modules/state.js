@@ -418,7 +418,13 @@ export function trimClip(clipId, { start, offset, duration }) {
 //  correct kind. A plain move to empty space just moves in place.
 //  Returns { track, newStart } and does NOT mutate state (caller does the move).
 // =============================================================
-export function resolvePlacement(clipId, trackId, start, dur) {
+// preferBehind: when a new track has to be created because every existing same-kind
+// track is occupied at this time range, this says which side of the track the user was
+// actually dropping onto to create it on — true means "stack this behind/under what's
+// already there" (further from the front of the visual stack), false/omitted means "in
+// front of it". Without this, a new track always landed at the very front, so there was
+// no way to intentionally drop something behind an existing clip.
+export function resolvePlacement(clipId, trackId, start, dur, preferBehind = false) {
   // Determine the clip's kind from ITS media (clipId is a clip id, not a media id).
   let wantKind = "video";
   const clip = clipById(clipId);
@@ -431,29 +437,36 @@ export function resolvePlacement(clipId, trackId, start, dur) {
   if (t && t.kind === wantKind && freeAt(t)) return { track: t, newStart: start };
   for (const other of cand) if (other.id !== clipId && freeAt(other)) return { track: other, newStart: start };
 
-  // no free same-kind track -> create one (positioned to be visible near the moving clip's kind)
-  let name, idx = 0;
-  if (wantKind === "video") {
-    name = `V${state.tracks.filter((x) => x.kind === "video").length + 1}`;
-    idx = 0; // new video on top
-  } else {
-    name = `A${state.tracks.filter((x) => x.kind === "audio").length + 1}`;
-    idx = state.tracks.length; // new audio at bottom
-  }
+  // no free same-kind track -> create one, anchored to the track the user actually
+  // dropped onto (trackId) and which side of it they indicated (preferBehind), rather
+  // than always jumping to the very front or very back of the whole stack.
+  const name = wantKind === "video"
+    ? `V${state.tracks.filter((x) => x.kind === "video").length + 1}`
+    : `A${state.tracks.filter((x) => x.kind === "audio").length + 1}`;
   const nt = { id: uid("t"), kind: wantKind, name, muted: false, hidden: false, clips: [] };
+
+  const anchorIdx = t ? state.tracks.indexOf(t) : -1;
+  let idx;
+  if (anchorIdx === -1) {
+    // no track to anchor to (shouldn't normally happen) -> keep old default behavior
+    idx = wantKind === "video" ? 0 : state.tracks.length;
+  } else {
+    // state.tracks is front-first: a lower index is visually/stack-order in front.
+    idx = preferBehind ? anchorIdx + 1 : anchorIdx;
+  }
   state.tracks.splice(idx, 0, nt);
   return { track: nt, newStart: start, created: true };
 }
 
 // After adding or moving a clip, if it now overlaps other clips on its track,
 // relocate it to a free same-kind track (creating one if necessary). Never destroys.
-export function repositionIfOverlapping(clipId) {
+export function repositionIfOverlapping(clipId, preferBehind = false) {
   const f = clipById(clipId);
   if (!f) return;
   const c = f.clip;
   const overlaps = f.track.clips.some((o) => o.id !== clipId && o.start < c.start + c.duration && o.start + o.duration > c.start);
   if (!overlaps) return;
-  const place = resolvePlacement(clipId, f.track.id, c.start, c.duration);
+  const place = resolvePlacement(clipId, f.track.id, c.start, c.duration, preferBehind);
   moveClip(clipId, place.newStart, place.track.id);
 }
 
